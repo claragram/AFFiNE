@@ -1,0 +1,45 @@
+# Claranote Production Gateway - claranote.com
+{
+    email admin@claralogy.com
+}
+
+# Production domain routing with automatic Let's Encrypt / ZeroSSL TLS
+claranote.com, www.claranote.com {
+    encode gzip zstd
+
+    # Marketing / Product showcase website
+    handle_path /home* {
+        root * /srv/website
+        file_server
+    }
+
+    # WebSocket & HTTP reverse proxy to Claranote core
+    handle {
+        reverse_proxy claranote:3010 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+# LAN, Tailscale & Direct Host Access fallback
+:80 {
+    encode gzip zstd
+
+    # Marketing / Product showcase website fallback
+    handle_path /home* {
+        root * /srv/website
+        file_server
+    }
+
+    handle {
+        reverse_proxy claranote:3010 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
